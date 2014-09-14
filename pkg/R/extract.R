@@ -1205,10 +1205,14 @@ setMethod("extract", signature = className("nlme", "nlme"),
 extract.lme4 <- function(model, method = c("naive", "profile", "boot", "Wald"), 
     level = 0.95, nsim = 1000, include.aic = TRUE, include.bic = TRUE, 
     include.loglik = TRUE, include.nobs = TRUE, include.groups = TRUE, 
-    include.variance = TRUE, ...) {
+    include.variance = TRUE, include.dic = FALSE, ...) {
   
   if (packageVersion("lme4") < 1.0) {
     message("Please update to a newer 'lme4' version for full compatibility.")
+  }
+  
+  if (include.dic %in%  TRUE & require(arm) %in% FALSE) {
+    message("The arm package is necessary to compute the DIC, please install it.")
   }
   
   gof <- numeric()
@@ -1224,6 +1228,12 @@ extract.lme4 <- function(model, method = c("naive", "profile", "boot", "Wald"),
     bic <- BIC(model)
     gof <- c(gof, bic)
     gof.names <- c(gof.names, "BIC")
+    gof.decimal <- c(gof.decimal, TRUE)
+  }
+  if (include.dic == TRUE) {
+    dic <- arm::extractDIC(model)
+    gof <- c(gof, dic)
+    gof.names <- c(gof.names, "DIC")
     gof.decimal <- c(gof.decimal, TRUE)
   }
   if (include.loglik == TRUE) {
@@ -1332,6 +1342,10 @@ setMethod("extract", signature = className("lme4", "lme4"),
 extract.mer <- extract.lme4
 setMethod("extract", signature = className("mer", "lme4"), 
     definition = extract.mer)
+
+extract.merMod <- extract.lme4
+setMethod("extract", signature = className("merMod", "lme4"), 
+          definition = extract.merMod)
 
 extract.lmerMod <- extract.lme4
 setMethod("extract", signature = className("lmerMod", "lme4"), 
